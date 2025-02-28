@@ -78,19 +78,6 @@ print("XGBoost Top 5 Features:")
 for feature, importance in xgb_top_features:
     print(f"{feature}: {importance:.6f}")
 
-# Spearman's Correlation
-spearman_scores = []
-for feature in features.columns:
-    coef, p = spearmanr(features[feature], df[target])
-    spearman_scores.append((feature, coef, p))
-
-spearman_scores.sort(key=lambda x: abs(x[1]), reverse=True)
-spearman_top_features = spearman_scores[:5]
-
-# 結果の表示
-print("Spearman's Correlation Top 5 Features:")
-for feature, coef, p in spearman_top_features:
-    print(f"{feature}: {coef:.6f} (p-value: {p:.6e})")
 # DataFrame表示オプションの調整
 pd.set_option('display.max_colwidth', None)
 pd.set_option('display.max_columns', None)
@@ -228,6 +215,20 @@ mi_series.sort_values(ascending=False, inplace=True)
 
 print("Naive Bayes (Mutual Information) Top Features:")
 print(mi_series.head(5))
+
+# Spearman's Correlation
+spearman_scores = []
+for feature in features.columns:
+    coef, p = spearmanr(features[feature], df[target])
+    spearman_scores.append((feature, coef, p))
+
+spearman_scores.sort(key=lambda x: abs(x[1]), reverse=True)
+spearman_top_features = spearman_scores[:5]
+
+# 結果の表示
+print("Spearman's Correlation Top 5 Features:")
+for feature, coef, p in spearman_top_features:
+    print(f"{feature}: {coef:.6f} (p-value: {p:.6e})")
 from scipy.stats import kendalltau
 
 # Kendall's Tauとp値を計算し、DataFrameを作成
