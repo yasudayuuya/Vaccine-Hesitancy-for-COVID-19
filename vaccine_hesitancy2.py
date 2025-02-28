@@ -78,30 +78,6 @@ print("XGBoost Top 5 Features:")
 for feature, importance in xgb_top_features:
     print(f"{feature}: {importance:.6f}")
 
-# DataFrame表示オプションの調整
-pd.set_option('display.max_colwidth', None)
-pd.set_option('display.max_columns', None)
-
-# 各手法の結果を縦一列にまとめる
-results = []
-
-# XGBoostの結果を追加
-for i, (feature, importance) in enumerate(xgb_top_features, start=1):
-    results.append({'Method': 'XGBoost', 'Rank': i, 'Feature': feature, 'Importance': importance})
-
-# Chi-squaredの結果を追加
-for i, (feature, score, p) in enumerate(chi2_top_features, start=1):
-    results.append({'Method': 'Chi-squared', 'Rank': i, 'Feature': feature, 'Importance': score, 'P-value': p})
-
-# Spearmanの結果を追加
-for i, (feature, coef, p) in enumerate(spearman_top_features, start=1):
-    results.append({'Method': 'Spearman', 'Rank': i, 'Feature': feature, 'Importance': coef, 'P-value': p})
-
-# 結果をDataFrameに変換
-comparison_df = pd.DataFrame(results)
-
-# 表形式でインデックスなしで表示
-print(comparison_df.to_string(index=False))
 # ランダムフォレストの特徴量重要度の計算
 model = RandomForestClassifier(n_estimators=100, random_state=42)
 model.fit(features, binary_target)
