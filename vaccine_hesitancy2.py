@@ -77,52 +77,7 @@ xgb_top_features = [(features.columns[i], xgb_importances[i]) for i in xgb_indic
 print("XGBoost Top 5 Features:")
 for feature, importance in xgb_top_features:
     print(f"{feature}: {importance:.6f}")
-# Chi-squared Test
-chi2_scores, chi2_pvalues = chi2(X_train, binary_target.loc[X_train.index])
-chi2_indices = chi2_scores.argsort()[::-1]
-chi2_top_features = [(features.columns[i], chi2_scores[i], chi2_pvalues[i]) for i in chi2_indices[:5]]
 
-# 結果の表示
-print("Chi-squared Top 5 Features:")
-for i, (feature, score, p) in enumerate(chi2_top_features, start=1):
-    print(f"{feature}: {score:.6f} (p-value: {p:.6e})")
-# Spearman's Correlation
-spearman_scores = []
-for feature in features.columns:
-    coef, p = spearmanr(features[feature], df[target])
-    spearman_scores.append((feature, coef, p))
-
-spearman_scores.sort(key=lambda x: abs(x[1]), reverse=True)
-spearman_top_features = spearman_scores[:5]
-
-# 結果の表示
-print("Spearman's Correlation Top 5 Features:")
-for feature, coef, p in spearman_top_features:
-    print(f"{feature}: {coef:.6f} (p-value: {p:.6e})")
-# DataFrame表示オプションの調整
-pd.set_option('display.max_colwidth', None)
-pd.set_option('display.max_columns', None)
-
-# 各手法の結果を縦一列にまとめる
-results = []
-
-# XGBoostの結果を追加
-for i, (feature, importance) in enumerate(xgb_top_features, start=1):
-    results.append({'Method': 'XGBoost', 'Rank': i, 'Feature': feature, 'Importance': importance})
-
-# Chi-squaredの結果を追加
-for i, (feature, score, p) in enumerate(chi2_top_features, start=1):
-    results.append({'Method': 'Chi-squared', 'Rank': i, 'Feature': feature, 'Importance': score, 'P-value': p})
-
-# Spearmanの結果を追加
-for i, (feature, coef, p) in enumerate(spearman_top_features, start=1):
-    results.append({'Method': 'Spearman', 'Rank': i, 'Feature': feature, 'Importance': coef, 'P-value': p})
-
-# 結果をDataFrameに変換
-comparison_df = pd.DataFrame(results)
-
-# 表形式でインデックスなしで表示
-print(comparison_df.to_string(index=False))
 # ランダムフォレストの特徴量重要度の計算
 model = RandomForestClassifier(n_estimators=100, random_state=42)
 model.fit(features, binary_target)
@@ -236,6 +191,20 @@ mi_series.sort_values(ascending=False, inplace=True)
 
 print("Naive Bayes (Mutual Information) Top Features:")
 print(mi_series.head(5))
+
+# Spearman's Correlation
+spearman_scores = []
+for feature in features.columns:
+    coef, p = spearmanr(features[feature], df[target])
+    spearman_scores.append((feature, coef, p))
+
+spearman_scores.sort(key=lambda x: abs(x[1]), reverse=True)
+spearman_top_features = spearman_scores[:5]
+
+# 結果の表示
+print("Spearman's Correlation Top 5 Features:")
+for feature, coef, p in spearman_top_features:
+    print(f"{feature}: {coef:.6f} (p-value: {p:.6e})")
 from scipy.stats import kendalltau
 
 # Kendall's Tauとp値を計算し、DataFrameを作成
@@ -257,60 +226,3 @@ top_kendall_features = sorted_kendall_df.head(5)
 print("Kendall's Tau 上位5特徴量とP値:")
 for index, row in top_kendall_features.iterrows():
     print(f"{row['Feature']}: Kendall's Tau {row['Kendall_Tau']:.6f}, P-value {row['P_value']:.6e}")
-from statsmodels.stats.outliers_influence import variance_inflation_factor
-from statsmodels.tools.tools import add_constant
-from sklearn.model_selection import train_test_split
-import statsmodels.api as sm
-
-# VIFを計算する関数
-def calculate_vif(df):
-    X = sm.add_constant(df)
-    vif_data = pd.DataFrame()
-    vif_data['feature'] = X.columns
-    vif_data['VIF'] = [variance_inflation_factor(X.values, i) for i in range(X.shape[1])]
-    vif_data = vif_data[vif_data['feature'] != 'const']
-    return vif_data.sort_values(by='VIF', ascending=False)
-
-# 特徴量の重要度を計算する関数
-def get_feature_importance(X, y):
-    model = RandomForestRegressor(random_state=42)
-    model.fit(X, y)
-    importance = pd.DataFrame({
-        'feature': X.columns,
-        'importance': model.feature_importances_
-    })
-    return importance.sort_values(by='importance', ascending=True)
-
-# 特徴量の重要度の低い順に削除し、各ステップのVIFを確認
-X_train, _, y_train, _ = train_test_split(X, y, test_size=0.2, random_state=42)
-features_to_remove = get_feature_importance(X_train, y_train)['feature'].tolist()
-
-removed_features = []
-for i in range(len(features_to_remove)):
-    temp_features = X_train.drop(columns=removed_features, errors='ignore')
-    if len(temp_features.columns) == 0:
-        break
-        
-    vif_data = calculate_vif(temp_features)
-    
-    # VIFが全て5以下か確認
-    if (vif_data['VIF'] <= 5).all():
-        print(f"All VIFs are 5 or below. Stopping the process.")
-        break
-    
-    # 重要度の低い特徴量を一つ削除
-    removed_features.append(features_to_remove[i])
-    print(f"Removed {features_to_remove[i]}\n")
-    print(vif_data)
-    print("\n")
-
-# 最終的な特徴量
-print("Final features:")
-print(temp_features.columns)
-
-# 結果のVIF
-final_vif = calculate_vif(temp_features)
-print(final_vif)
-# 結果のVIF
-final_vif = calculate_vif(temp_features)
-print(final_vif)
