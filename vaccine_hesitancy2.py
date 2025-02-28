@@ -77,15 +77,7 @@ xgb_top_features = [(features.columns[i], xgb_importances[i]) for i in xgb_indic
 print("XGBoost Top 5 Features:")
 for feature, importance in xgb_top_features:
     print(f"{feature}: {importance:.6f}")
-# Chi-squared Test
-chi2_scores, chi2_pvalues = chi2(X_train, binary_target.loc[X_train.index])
-chi2_indices = chi2_scores.argsort()[::-1]
-chi2_top_features = [(features.columns[i], chi2_scores[i], chi2_pvalues[i]) for i in chi2_indices[:5]]
 
-# 結果の表示
-print("Chi-squared Top 5 Features:")
-for i, (feature, score, p) in enumerate(chi2_top_features, start=1):
-    print(f"{feature}: {score:.6f} (p-value: {p:.6e})")
 # Spearman's Correlation
 spearman_scores = []
 for feature in features.columns:
