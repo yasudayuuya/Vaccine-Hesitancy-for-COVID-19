@@ -226,3 +226,60 @@ top_kendall_features = sorted_kendall_df.head(5)
 print("Kendall's Tau 上位5特徴量とP値:")
 for index, row in top_kendall_features.iterrows():
     print(f"{row['Feature']}: Kendall's Tau {row['Kendall_Tau']:.6f}, P-value {row['P_value']:.6e}")
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+from statsmodels.tools.tools import add_constant
+from sklearn.model_selection import train_test_split
+import statsmodels.api as sm
+
+# VIFを計算する関数
+def calculate_vif(df):
+    X = sm.add_constant(df)
+    vif_data = pd.DataFrame()
+    vif_data['feature'] = X.columns
+    vif_data['VIF'] = [variance_inflation_factor(X.values, i) for i in range(X.shape[1])]
+    vif_data = vif_data[vif_data['feature'] != 'const']
+    return vif_data.sort_values(by='VIF', ascending=False)
+
+# 特徴量の重要度を計算する関数
+def get_feature_importance(X, y):
+    model = RandomForestRegressor(random_state=42)
+    model.fit(X, y)
+    importance = pd.DataFrame({
+        'feature': X.columns,
+        'importance': model.feature_importances_
+    })
+    return importance.sort_values(by='importance', ascending=True)
+
+# 特徴量の重要度の低い順に削除し、各ステップのVIFを確認
+X_train, _, y_train, _ = train_test_split(X, y, test_size=0.2, random_state=42)
+features_to_remove = get_feature_importance(X_train, y_train)['feature'].tolist()
+
+removed_features = []
+for i in range(len(features_to_remove)):
+    temp_features = X_train.drop(columns=removed_features, errors='ignore')
+    if len(temp_features.columns) == 0:
+        break
+        
+    vif_data = calculate_vif(temp_features)
+    
+    # VIFが全て5以下か確認
+    if (vif_data['VIF'] <= 5).all():
+        print(f"All VIFs are 5 or below. Stopping the process.")
+        break
+    
+    # 重要度の低い特徴量を一つ削除
+    removed_features.append(features_to_remove[i])
+    print(f"Removed {features_to_remove[i]}\n")
+    print(vif_data)
+    print("\n")
+
+# 最終的な特徴量
+print("Final features:")
+print(temp_features.columns)
+
+# 結果のVIF
+final_vif = calculate_vif(temp_features)
+print(final_vif)
+# 結果のVIF
+final_vif = calculate_vif(temp_features)
+print(final_vif)
