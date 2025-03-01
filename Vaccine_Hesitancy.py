@@ -179,13 +179,11 @@ print("SVM Top 5 Features and Ranking, Coefficients:")
 for index, row in top_5_features.iterrows():
     print(f"{row['Feature']}: Ranking {row['Ranking']}, Coefficient {row['Coefficient']:.6f}")
 
-from sklearn.naive_bayes import GaussianNB
-from sklearn.feature_selection import mutual_info_classif
 
 # mi represents mutual information
 # This calculates the dependency between features and target variable
 # This function works for both continuous and categorical features
-mi = mutual_info_classif(X, binary_target)
+mi = mutual_info_classif(X, binary_target, random_state=42)
 mi_series = pd.Series(mi, index=features.columns)
 mi_series.sort_values(ascending=False, inplace=True)
 
